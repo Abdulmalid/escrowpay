@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# next
+.next/
+out/
+
+# env (never commit real secrets)
+.env*.local
+.env
+
+# misc
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+coverage/
