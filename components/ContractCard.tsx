@@ -17,7 +17,7 @@ import {
   ArrowRight,
   X,
 } from 'lucide-react';
-import { Avatar, CountUp, firstName, Portal } from './ui';
+import { Avatar, CountUp, firstName, Portal, useLockBodyScroll } from './ui';
 import CheckoutModal from './CheckoutModal';
 import { Role } from '@/lib/session';
 import { rateFor, sym } from '@/lib/clientFx';
@@ -46,6 +46,7 @@ export default function ContractCard({
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  useLockBodyScroll(!!submissionModalMilestone);
 
   const copy = (text: string, field: string) => {
     navigator.clipboard?.writeText(text);
@@ -444,11 +445,11 @@ export default function ContractCard({
       {submissionModalMilestone && (
         <Portal>
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex overflow-y-auto overscroll-contain bg-slate-950/50 p-4 backdrop-blur-sm"
           onClick={() => setSubmissionModalMilestone(null)}
         >
           <div
-            className="paper-card relative w-full max-w-md animate-pop rounded-[2rem] p-7"
+            className="paper-card relative mx-auto my-auto w-full max-w-md animate-pop rounded-[2rem] p-7"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"

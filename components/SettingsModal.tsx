@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLockBodyScroll } from './ui';
 import { X, Settings, CheckCircle2, AlertCircle, Loader2, KeyRound, Globe, ArrowRight } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -16,6 +17,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
+  useLockBodyScroll(isOpen);
   if (!isOpen) return null;
 
   const handleTestConnection = async () => {
@@ -41,8 +43,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="glass-panel max-w-lg w-full p-6 rounded-2xl border border-slate-800 my-8 shadow-2xl relative text-xs">
+    <div className="fixed inset-0 z-50 flex p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto overscroll-contain">
+      <div className="glass-panel max-w-lg w-full p-6 rounded-2xl border border-slate-800 my-auto mx-auto shadow-2xl relative text-xs">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-white transition"

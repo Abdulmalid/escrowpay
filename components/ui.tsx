@@ -149,3 +149,15 @@ export function Portal({ children }: { children: React.ReactNode }) {
   useEffect(() => setMounted(true), []);
   return mounted ? createPortal(children, document.body) : null;
 }
+
+/** Stop the page behind a modal from scrolling while it is open. */
+export function useLockBodyScroll(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [active]);
+}

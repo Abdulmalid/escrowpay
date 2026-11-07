@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLockBodyScroll } from './ui';
 import { X, Cpu, CheckCircle2, ShieldCheck, ArrowRight, Zap, Layers, Lock } from 'lucide-react';
 
 interface ArchitectureModalProps {
@@ -9,11 +10,12 @@ interface ArchitectureModalProps {
 }
 
 export default function ArchitectureModal({ isOpen, onClose }: ArchitectureModalProps) {
+  useLockBodyScroll(isOpen);
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="glass-panel max-w-3xl w-full p-6 sm:p-8 rounded-2xl border border-slate-800 my-8 shadow-2xl relative text-xs text-slate-300">
+    <div className="fixed inset-0 z-50 flex p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto overscroll-contain">
+      <div className="glass-panel max-w-3xl w-full p-6 sm:p-8 rounded-2xl border border-slate-800 my-auto mx-auto shadow-2xl relative text-xs text-slate-300">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-white transition"

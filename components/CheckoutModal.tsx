@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Check, Copy, FlaskConical, Landmark, Loader2, Lock, X } from 'lucide-react';
 import { Contract } from '@/lib/types';
 import { sym, fmt } from '@/lib/clientFx';
-import { firstName, Portal } from './ui';
+import { firstName, Portal, useLockBodyScroll } from './ui';
 
 type Phase = 'review' | 'processing' | 'done' | 'failed';
 
@@ -23,6 +23,7 @@ export default function CheckoutModal({
   onClose: () => void;
   onPay: () => Promise<boolean>;
 }) {
+  useLockBodyScroll(true);
   const [phase, setPhase] = useState<Phase>('review');
   const [step, setStep] = useState(0);
   const [copied, setCopied] = useState<string | null>(null);
@@ -68,11 +69,11 @@ export default function CheckoutModal({
   return (
     <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex overflow-y-auto overscroll-contain bg-slate-950/55 p-4 backdrop-blur-sm"
       onClick={phase === 'processing' ? undefined : onClose}
     >
       <div
-        className="paper-card relative my-6 w-full max-w-lg animate-pop rounded-[2rem] p-6 sm:p-8"
+        className="paper-card relative mx-auto my-auto w-full max-w-lg animate-pop rounded-[2rem] p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

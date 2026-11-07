@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLockBodyScroll } from './ui';
 import { X, Plus, Trash2, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { Currency, PayoutCurrency } from '@/lib/types';
 
@@ -14,6 +15,8 @@ interface NewContractModalProps {
 
 export default function NewContractModal({ isOpen, onClose, onCreated, defaultClientName = '', defaultClientEmail = '' }: NewContractModalProps) {
   const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const errorRef = useRef<HTMLDivElement>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [clientName, setClientName] = useState('');
@@ -55,7 +58,35 @@ export default function NewContractModal({ isOpen, onClose, onCreated, defaultCl
     setTotalAmount(milestones.reduce((sum, m) => sum + (Number(m.amount) || 0), 0));
   }, [milestones]);
 
+  useLockBodyScroll(isOpen);
+
+  // Clear stale errors each time the form opens.
+  useEffect(() => {
+    if (isOpen) setFormErrors([]);
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const showErrors = (errs: string[]) => {
+    setFormErrors(errs);
+    setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+  };
+
+  const validate = (): string[] => {
+    const errs: string[] = [];
+    const email = /^\S+@\S+\.\S+$/;
+    if (!title.trim()) errs.push('Give the project a title.');
+    if (!clientName.trim()) errs.push('Add the client’s name.');
+    if (!email.test(clientEmail.trim())) errs.push('Add a valid client email.');
+    if (!freelancerName.trim()) errs.push('Add the freelancer’s name.');
+    if (!email.test(freelancerEmail.trim())) errs.push('Add the freelancer’s email — it’s how they find this project.');
+    if (targetPayoutCurrency === 'NGN' && !/^\d{10}$/.test(accountNumber.trim())) errs.push('Enter the freelancer’s 10-digit bank account number.');
+    if ((targetPayoutCurrency === 'KES' || targetPayoutCurrency === 'GHS') && !mobileNumber.trim()) errs.push('Enter the freelancer’s mobile money number.');
+    if (targetPayoutCurrency === 'USDC' && !cryptoAddress.trim()) errs.push('Enter the freelancer’s wallet address.');
+    if (milestones.some((m) => !String(m.title).trim())) errs.push('Every milestone needs a title.');
+    if (milestones.some((m) => !(Number(m.amount) > 0))) errs.push('Every milestone needs an amount above 0.');
+    return errs;
+  };
 
   const handleAddMilestone = () => {
     setMilestones([...milestones, { title: `Milestone ${milestones.length + 1}`, amount: 300, description: '' }]);
@@ -68,6 +99,9 @@ export default function NewContractModal({ isOpen, onClose, onCreated, defaultCl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errs = validate();
+    if (errs.length) return showErrors(errs);
+    setFormErrors([]);
     setLoading(true);
 
     try {
@@ -109,15 +143,15 @@ export default function NewContractModal({ isOpen, onClose, onCreated, defaultCl
       onCreated(created?.contract?.id);
       onClose();
     } catch (err: any) {
-      alert(err.message || 'Error creating contract');
+      showErrors([err.message || 'Something went wrong creating the project. Please try again.']);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="glass-panel max-w-2xl w-full p-6 sm:p-8 rounded-2xl border border-slate-800 my-8 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto overscroll-contain">
+      <div className="glass-panel max-w-2xl w-full p-6 sm:p-8 rounded-2xl border border-slate-800 my-auto mx-auto shadow-2xl relative">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-white transition"
@@ -137,7 +171,7 @@ export default function NewContractModal({ isOpen, onClose, onCreated, defaultCl
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4 text-xs">
           {/* Title & Description */}
           <div className="grid grid-cols-1 gap-3">
             <div>
@@ -424,8 +458,18 @@ export default function NewContractModal({ isOpen, onClose, onCreated, defaultCl
             </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-800">
+          {/* Action Footer (sticks to the bottom while the form scrolls) */}
+          {formErrors.length > 0 && (
+            <div ref={errorRef} role="alert" className="rounded-xl border border-coral-500/40 bg-coral-500/10 p-3 text-coral-300">
+              <div className="mb-1 font-semibold">Almost there — a few things to fix:</div>
+              <ul className="list-disc space-y-0.5 pl-4">
+                {formErrors.map((e) => (
+                  <li key={e}>{e}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="sticky bottom-0 z-10 -mx-6 -mb-6 flex items-center justify-end space-x-3 rounded-b-2xl border-t border-slate-800 bg-slate-900/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:-mb-8 sm:px-8">
             <button
               type="button"
               onClick={onClose}
