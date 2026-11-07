@@ -50,7 +50,8 @@ export async function getBlaaizAccessToken(): Promise<string> {
   bodyParams.append('client_id', process.env.BLAAIZ_CLIENT_ID!);
   bodyParams.append('client_secret', process.env.BLAAIZ_CLIENT_SECRET!);
   bodyParams.append('grant_type', 'client_credentials');
-  bodyParams.append('scope', 'wallet:read payout:create virtual_account:create virtual_account:read webhook:write');
+  // Blaaiz grants its full default scope set unless one is requested, so only send a scope if configured.
+  if (process.env.BLAAIZ_OAUTH_SCOPE) bodyParams.append('scope', process.env.BLAAIZ_OAUTH_SCOPE);
 
   const res = await fetch(`${BLAAIZ_BASE_URL}/oauth/token`, {
     method: 'POST',
@@ -288,17 +289,38 @@ export async function initiateBlaaizPayout(details: {
 /**
  * 5. Webhook Signature Verification & Simulator Payload Helper
  */
+export const WEBHOOK_TOLERANCE_SECONDS = 5 * 60;
+
+/** Blaaiz signs `${timestamp}.${rawBody}` with HMAC-SHA256 and sends x-blaaiz-signature + x-blaaiz-timestamp. */
+export function computeBlaaizSignature(timestamp: string, rawBody: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex');
+}
+
+function timestampAgeSeconds(ts: string): number | null {
+  const n = Number(ts);
+  let ms: number;
+  if (Number.isFinite(n)) ms = n < 1e12 ? n * 1000 : n; // unix seconds or milliseconds
+  else {
+    ms = Date.parse(ts); // ISO string
+    if (!Number.isFinite(ms)) return null;
+  }
+  return Math.abs(Date.now() - ms) / 1000;
+}
+
 export function verifyBlaaizSignature(
   rawBody: string,
   signatureHeader: string | null,
+  timestampHeader: string | null,
   secret: string = getSigningSecret()
 ): boolean {
-  if (!signatureHeader) return false;
-  const computed = crypto.createHmac('sha256', secret).update(rawBody).digest();
+  if (!signatureHeader || !timestampHeader) return false;
+  const age = timestampAgeSeconds(timestampHeader);
+  if (age === null || age > WEBHOOK_TOLERANCE_SECONDS) return false; // stale or unparsable => replay protection
+  const expected = Buffer.from(computeBlaaizSignature(timestampHeader, rawBody, secret), 'hex');
   const provided = Buffer.from(signatureHeader.trim().toLowerCase(), 'hex');
   // Length must match or timingSafeEqual throws; also rejects non-hex input (decodes short).
-  if (provided.length !== computed.length) return false;
-  return crypto.timingSafeEqual(provided, computed);
+  if (provided.length !== expected.length) return false;
+  return crypto.timingSafeEqual(provided, expected);
 }
 
 export function createSignedWebhookPayload(event: string, data: any, secret: string = getSigningSecret()) {
@@ -310,11 +332,13 @@ export function createSignedWebhookPayload(event: string, data: any, secret: str
   };
 
   const raw = JSON.stringify(payload);
-  const signature = crypto.createHmac('sha256', secret).update(raw).digest('hex');
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const signature = computeBlaaizSignature(timestamp, raw, secret);
 
   return {
     payload,
     rawBody: raw,
+    timestamp,
     signature,
   };
 }

@@ -11,11 +11,12 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('x-blaaiz-signature');
+    const timestamp = req.headers.get('x-blaaiz-timestamp');
 
     // The signature is ALWAYS required. (There is no bypass header: the simulator signs its payloads.)
     let isValidSignature = false;
     try {
-      isValidSignature = verifyBlaaizSignature(rawBody, signature, getSigningSecret());
+      isValidSignature = verifyBlaaizSignature(rawBody, signature, timestamp, getSigningSecret());
     } catch (e) {
       console.error('Webhook signing secret not configured:', e);
       return NextResponse.json({ error: 'Webhook receiver not configured' }, { status: 503 });

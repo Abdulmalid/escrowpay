@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'x-blaaiz-signature': signed.signature,
+        'x-blaaiz-timestamp': signed.timestamp,
         'User-Agent': 'Blaaiz-Webhook-Delivery/1.0',
       },
       body: signed.rawBody,
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       signature: signed.signature,
+      timestamp: signed.timestamp,
       payload: signed.payload,
       webhookResponse: result,
     });

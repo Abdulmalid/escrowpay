@@ -14,7 +14,7 @@ African and emerging-market freelancers, agencies, and cross-border businesses f
 
 ### The Solution: EscrowPay Global
 **EscrowPay Global** is an autonomous cross-border milestone escrow platform engineered entirely on the **Blaaiz Platform (RaaS & BaaS)** architecture:
-* **Dedicated Virtual Bank Accounts (USD, EUR, GBP, CAD):** Provisioned instantly via Blaaiz API for client local wire/ACH/SEPA/Interac deposits.
+* **Dedicated deposit accounts per project:** shown at checkout so the client knows where to pay (mock today; maps to Blaaiz virtual bank accounts / collections — see the mapping table below).
 * **Cryptographic Inbound Webhook Reconciliation:** Automatic payment detection via signed `collection_url` webhooks with `x-blaaiz-signature` validation.
 * **FX Devaluation Shield (Auto-Swap to USDC):** Instantly converts deposited fiat to USDC stablecoin on Polygon rail to freeze purchasing power during project delivery.
 * **Multi-Rail Instant Payouts:** Releases funds directly into local African bank accounts (Nigeria NIP, Kenya M-Pesa, Ghana Mobile Money) in **under 15 seconds** at a fraction of legacy fees.
@@ -67,9 +67,25 @@ African and emerging-market freelancers, agencies, and cross-border businesses f
 └────────────┘   └────────────┘   └────────────┘
 ```
 
-### Specific Blaaiz APIs & Concepts Utilized:
-| Blaaiz Capability | Endpoint / Mechanism | How EscrowPay Uses It |
-| :--- | :--- | :--- |
+### How this maps to the Blaaiz API
+
+> **Status: mock flow.** Blaaiz sandbox access is pending, so every call below is simulated.
+> The mapping is based on Blaaiz's public SDK documentation ([Python SDK](https://pypi.org/project/blaaiz-python-sdk/)).
+> The OAuth call and the webhook verification are implemented to Blaaiz's documented scheme; the money-moving calls
+> still need their request bodies adapted to Blaaiz's schema (customer / wallet / currency IDs) once sandbox keys exist.
+
+| Step in the app | Blaaiz capability (per SDK docs) | Today | With sandbox keys |
+| :--- | :--- | :--- | :--- |
+| Authenticate | OAuth 2.0 client credentials, `POST {base_url}/oauth/token` (dev: `https://api-dev.blaaiz.com`) | **Implemented** in `lib/blaaiz.ts` (token cached, refreshed 60 s early) | Same code, `BLAAIZ_SIMULATION_MODE=false` |
+| Know the parties | `customers.create` (first/last name, type, email, country) → `customer_id` | Client & freelancer stored on the project | Create a Blaaiz customer for each, pass `customer_id` |
+| Collect the client's payment | Virtual bank accounts (`wallet_id`, `customer_id`, `account_name`) and collections (open banking EUR/GBP, card NGN/USD, Interac CAD, crypto), tagged with `merchant_reference` | Mock account details at checkout | Provision per project; reference = `ESCROW-<id>` |
+| Detect the deposit | Webhook to the registered `collection_url`; headers `x-blaaiz-signature` + `x-blaaiz-timestamp`, HMAC-SHA256 over `timestamp.payload` | **Implemented & tested**: signature + 5-min replay window + event de-duplication + amount/currency check | Register the URL with `webhooks.register` |
+| Protect against FX swings | `swaps.initiate` between business wallets | Simulated USDC swap | Call swaps between the NGN/USD and USDC wallets |
+| Show rate and fees | `rates.list`, `fees.get_breakdown` | Fixed indicative rates | Call both before the client pays |
+| Pay the freelancer | `payouts.initiate` with `method` = `bank_transfer` or `mobile_money`, `merchant_reference`, `from_amount`, currency IDs, `customer_id`, `wallet_id` | Simulated `SUCCESSFUL` result; idempotent, one payout per milestone | Real call; the payout reference is used as an idempotency key |
+| Follow status | `transactions.get` by `merchant_reference`; payout webhook (`payout_url`) | Status shown in the app | Reconcile via webhook |
+
+--- | :--- | :--- |
 | **OAuth 2.0 Auth** | `POST /oauth/token` | Implements scoped client credentials (`virtual_account:create`, `payout:create`, `wallet:read`, `webhook:write`) with in-memory token caching. |
 | **BaaS Virtual Accounts** | `POST /api/external/virtual-account` | Generates localized virtual account details for US ACH, EU SEPA IBAN, UK Sort Codes, and CAD Interac tied to a unique `merchant_reference`. |
 | **Cryptographic Webhooks** | `POST /api/webhooks/blaaiz` | Validates HMAC-SHA256 `x-blaaiz-signature` against `signing_secret` to automatically detect deposits and trigger milestone states. |

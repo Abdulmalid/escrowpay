@@ -207,7 +207,7 @@ async function runTests() {
     // Regression: replaying the exact same signed webhook is a no-op
     const replayRes = await fetch(`${BASE_URL}/api/webhooks/blaaiz`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-blaaiz-signature': simData.signature },
+      headers: { 'Content-Type': 'application/json', 'x-blaaiz-signature': simData.signature, 'x-blaaiz-timestamp': simData.timestamp },
       body: JSON.stringify(simData.payload),
     });
     const replayData = await replayRes.json();
