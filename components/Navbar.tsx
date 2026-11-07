@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Plus, Terminal, BookOpen, Cpu, Sparkles, Settings } from 'lucide-react';
+import { Plus, ScrollText, Compass, Wand2, Settings, Heart } from 'lucide-react';
 
 interface NavbarProps {
   onOpenNewContract: () => void;
@@ -21,85 +21,66 @@ export default function Navbar({
   logCount,
 }: NavbarProps) {
   return (
-    <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <ShieldCheck className="h-6 w-6 text-slate-950 stroke-[2.5]" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg tracking-tight text-white">EscrowPay</span>
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Global
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 text-xs text-slate-400">
-                <span>Built on</span>
-                <span className="font-semibold text-emerald-400">Blaaiz RaaS Architecture</span>
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              </div>
-            </div>
-          </div>
-
-          {/* Supported Rails Pill */}
-          <div className="hidden lg:flex items-center space-x-2 text-xs bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1.5 text-slate-300">
-            <span className="text-slate-400 font-medium">Dual-Rail Engine:</span>
-            <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-200">USD • EUR • GBP • CAD</span>
-            <span className="text-emerald-400 font-semibold">➔</span>
-            <span className="bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-800/40">
-              NGN NIP • KES M-Pesa • USDC
+    <header className="sticky top-0 z-40 border-b border-slate-900/5 bg-cream/75 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-[68px] items-center justify-between">
+          {/* Brand */}
+          <a href="#top" className="group flex items-center gap-3">
+            <span className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-forest-500 to-forest-800 text-white shadow-[0_8px_18px_-8px_rgba(27,92,58,.9)] transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
+              <Heart className="h-5 w-5 fill-marigold-400 text-marigold-400 animate-heartbeat" />
             </span>
-          </div>
+            <span className="leading-tight">
+              <span className="display block text-xl font-semibold text-slate-900">EscrowPay</span>
+              <span className="block text-[11px] text-slate-500">built on Blaaiz</span>
+            </span>
+          </a>
 
-          {/* Action CTAs */}
-          <div className="flex items-center space-x-2.5">
-            <button
-              onClick={onOpenSettings}
-              className="p-2 text-slate-400 hover:text-emerald-400 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg transition"
-              title="Blaaiz API Settings (api-dev.blaaiz.com)"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
-
+          {/* Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={onOpenArchitecture}
-              className="flex items-center space-x-1.5 px-3 py-2 text-xs font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg transition"
-              title="View Blaaiz Architecture Blueprint"
+              className="btn-ghost hidden items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium md:flex"
             >
-              <Cpu className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Architecture</span>
+              <Compass className="h-4 w-4 text-forest-600" />
+              How it works
             </button>
 
             <button
               onClick={onToggleLogs}
-              className="relative flex items-center space-x-1.5 px-3 py-2 text-xs font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg transition"
+              className="btn-ghost relative flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium sm:px-3.5"
+              title="Every call to Blaaiz, as it happens"
             >
-              <Terminal className="h-3.5 w-3.5 text-teal-400" />
-              <span className="hidden sm:inline">Blaaiz Logs</span>
+              <ScrollText className="h-4 w-4 text-coral-500" />
+              <span className="hidden sm:inline">Activity</span>
               {logCount > 0 && (
-                <span className="bg-emerald-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.2 rounded-full">
-                  {logCount}
-                </span>
+                <span className="rounded-full bg-coral-500 px-1.5 text-[10px] font-bold leading-4 text-white">{logCount}</span>
               )}
             </button>
 
             <button
               onClick={onToggleSimulator}
-              className="flex items-center space-x-1.5 px-3 py-2 text-xs font-medium text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/30 rounded-lg transition"
+              className="btn-ghost flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium sm:px-3.5"
             >
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Judge Simulator</span>
+              <Wand2 className="h-4 w-4 text-marigold-600" />
+              <span className="hidden sm:inline">Try the demo</span>
+            </button>
+
+            <button
+              onClick={onOpenSettings}
+              className="btn-ghost hidden rounded-full p-2.5 sm:block"
+              title="Blaaiz connection settings"
+              aria-label="Settings"
+            >
+              <Settings className="h-4 w-4" />
             </button>
 
             <button
               onClick={onOpenNewContract}
-              className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 rounded-lg shadow-md shadow-emerald-500/20 transition"
+              className="btn-forest flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-[13px] font-semibold sm:px-4"
             >
-              <Plus className="h-4 w-4 stroke-[2.5]" />
-              <span>New Escrow</span>
+              <Plus className="h-4 w-4" strokeWidth={2.6} />
+              <span className="hidden min-[420px]:inline">New escrow</span>
+              <span className="min-[420px]:hidden">New</span>
             </button>
           </div>
         </div>
