@@ -1,17 +1,12 @@
-# dependencies
-node_modules/
-
-# next
-.next/
-out/
-
-# env (never commit real secrets)
+node_modules
+.next
+.env.local
 .env*.local
-.env
-
-# misc
-*.log
+.vercel
+.contracts_data.json
+.blaaiz_logs.json
 *.tsbuildinfo
-.DS_Store
-Thumbs.db
-coverage/
+.next-*
+
+.vercel
+.env*

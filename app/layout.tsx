@@ -1,29 +1,31 @@
-import type { Metadata } from "next";
-import { Manrope, Sora } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Fraunces, DM_Sans } from 'next/font/google';
+import './globals.css';
 
-const display = Sora({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
+const display = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  style: ['normal', 'italic'],
+  axes: ['SOFT', 'opsz'],
+  display: 'swap',
 });
 
-const sans = Manrope({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
+const body = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dmsans',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "EscrowPay Global — Trustless Payments. Trusted Delivery.",
+  title: 'EscrowPay — Do the work. Get paid. Anywhere.',
   description:
-    "Milestone-based payment coordination for cross-border freelance work. Demo escrow workflow.",
+    'Milestone escrow for people who work across borders. Clients fund first, work is delivered, and the money lands in a local bank or M-Pesa in seconds — protected from currency swings. Built on Blaaiz.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
+      <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
   );
 }
