@@ -1,0 +1,5 @@
+.env*
+.contracts_data.json
+.blaaiz_logs.json
+.webhook_events.json
+.next-*

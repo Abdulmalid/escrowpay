@@ -7,3 +7,6 @@ node_modules
 .blaaiz_logs.json
 *.tsbuildinfo
 .next-*
+
+.vercel
+.env*

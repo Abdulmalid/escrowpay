@@ -166,6 +166,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
       <div>
+        {/* Mock-flow disclosure required by the Blaaiz Buildathon brief */}
+        <div className="bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-xs sm:text-sm px-4 py-2 text-center">
+          <strong className="font-semibold">MOCK FLOW — Blaaiz sandbox access pending.</strong>{' '}
+          Virtual accounts, FX swaps and payouts below are simulated; no real money moves. The app is
+          wired to the real Blaaiz endpoints (<code>/oauth/token</code>, <code>/virtual-account</code>,{' '}
+          <code>/payout</code>) and switches to them when sandbox keys are set.
+        </div>
+
         {/* Navigation Bar */}
         <Navbar
           onOpenNewContract={() => setIsNewContractOpen(true)}
