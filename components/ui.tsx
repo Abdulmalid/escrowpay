@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 /** Fade/slide children in when they scroll into view. */
 export function Reveal({
@@ -138,3 +139,13 @@ export function Avatar({
 
 export const money = (n: number, cur: string) =>
   `${cur === 'NGN' ? '₦' : cur === 'USD' ? '$' : cur === 'GBP' ? '£' : cur === 'EUR' ? '€' : cur + ' '}${Math.round(n).toLocaleString()}`;
+
+/**
+ * Render children directly under <body>. Modals must use this: cards have hover transforms,
+ * and a transformed ancestor would otherwise trap `position: fixed` overlays inside the card.
+ */
+export function Portal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted ? createPortal(children, document.body) : null;
+}

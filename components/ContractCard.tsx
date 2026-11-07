@@ -12,34 +12,30 @@ import {
   Loader2,
   Heart,
   Hourglass,
-  Wand2,
+  Landmark,
+  Smartphone,
   ArrowRight,
   X,
 } from 'lucide-react';
-import { Avatar, CountUp, firstName } from './ui';
+import { Avatar, CountUp, firstName, Portal } from './ui';
+import CheckoutModal from './CheckoutModal';
+import { Role } from '@/lib/session';
+import { rateFor, sym } from '@/lib/clientFx';
 
 interface ContractCardProps {
   contract: Contract;
+  role: Role;
   onRefresh: () => void;
-  onSimulateDeposit: (contractId: string) => void;
+  onSimulateDeposit: (contractId: string) => Promise<boolean>;
   onTriggerPayout: (contractId: string, milestoneId: string) => Promise<void>;
   onSubmitDeliverable: (contractId: string, milestoneId: string, url: string) => Promise<void>;
 }
-
-// Display-only indicative rates (mirrors the server's demo table in lib/blaaiz.ts).
-const INDICATIVE: Record<string, Record<string, number>> = {
-  USD: { NGN: 1680, KES: 130, GHS: 15.5, USD: 1, USDC: 1 },
-  EUR: { NGN: 1820, KES: 141, GHS: 16.8, USD: 1.08, USDC: 1.08 },
-  GBP: { NGN: 2150, KES: 166, GHS: 19.8, USD: 1.28, USDC: 1.28 },
-  CAD: { NGN: 1220, KES: 94, GHS: 11.2, USD: 0.73, USDC: 0.73 },
-};
-const SYMBOL: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', CAD: 'C$', NGN: '₦', KES: 'KSh ', GHS: 'GH₵', USDC: '' };
-const sym = (c: string) => SYMBOL[c] ?? `${c} `;
 
 const STAGES = ['Waiting for deposit', 'Held safely', 'Work delivered', 'Paid'];
 
 export default function ContractCard({
   contract,
+  role,
   onSimulateDeposit,
   onTriggerPayout,
   onSubmitDeliverable,
@@ -49,7 +45,7 @@ export default function ContractCard({
   const [submissionModalMilestone, setSubmissionModalMilestone] = useState<Milestone | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [depositing, setDepositing] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const copy = (text: string, field: string) => {
     navigator.clipboard?.writeText(text);
@@ -63,15 +59,6 @@ export default function ContractCard({
       await onTriggerPayout(contract.id, milestoneId);
     } finally {
       setPayoutLoadingId(null);
-    }
-  };
-
-  const handleDeposit = async () => {
-    setDepositing(true);
-    try {
-      await onSimulateDeposit(contract.id);
-    } finally {
-      setDepositing(false);
     }
   };
 
@@ -96,7 +83,13 @@ export default function ContractCard({
   const stage = isAwaiting ? 0 : isCompleted ? 3 : anyDelivered ? 2 : 1;
 
   const done = contract.milestones.filter((m) => m.status === 'DISBURSED').length;
-  const rate = INDICATIVE[contract.currency]?.[contract.targetPayoutCurrency] ?? 1;
+  const rate = rateFor(contract.currency, contract.targetPayoutCurrency);
+  const isClient = role === 'client';
+  const clientFirst = firstName(contract.clientName);
+  const dest =
+    contract.payoutMethod === 'bank_transfer'
+      ? { icon: Landmark, label: contract.payoutDetails.bankName || 'Bank account', sub: `•••• ${(contract.payoutDetails.accountNumber || '').slice(-4)}` }
+      : { icon: Smartphone, label: contract.payoutDetails.networkProvider || 'Mobile money', sub: contract.payoutDetails.mobileNumber || '' };
   const localTotal = contract.totalAmount * rate;
   const routeLabel = va?.routingNumber ? 'Routing number' : va?.sortCode ? 'Sort code' : 'SWIFT / BIC';
   const routeValue = va?.routingNumber || va?.sortCode || va?.swiftBic || '';
@@ -183,6 +176,29 @@ export default function ContractCard({
       {/* ---------- Two panels ---------- */}
       <div className="grid grid-cols-1 gap-5 p-6 sm:p-8 lg:grid-cols-12">
         {/* Where the client sends money */}
+        {!isClient ? (
+          <section className="rounded-3xl border border-slate-200/70 bg-paper p-5 lg:col-span-7">
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-100 text-forest-600">
+                <dest.icon className="h-4 w-4" />
+              </span>
+              How you get paid
+            </h4>
+            <div className="flex items-center justify-between rounded-2xl bg-cream/60 px-4 py-3">
+              <span className="text-sm text-slate-500">Paid straight to</span>
+              <span className="text-right text-sm font-semibold text-slate-800">
+                {dest.label} <span className="ml-1 font-mono text-xs font-normal text-slate-500">{dest.sub}</span>
+              </span>
+            </div>
+            <p className="mt-3 rounded-2xl bg-marigold-300/25 p-4 text-[13px] leading-relaxed text-slate-700">
+              {isAwaiting
+                ? `Waiting for ${clientFirst} to fund the project. Once the money is in the vault you can start, knowing it’s there.`
+                : isCompleted
+                ? 'Everything on this project has been paid. Nice work!'
+                : 'The money is safely in the vault. Hand in a milestone and your client can release it — it reaches you in seconds.'}
+            </p>
+          </section>
+        ) : (
         <section className="rounded-3xl border border-slate-200/70 bg-paper p-5 lg:col-span-7">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -233,15 +249,14 @@ export default function ContractCard({
               {isAwaiting && (
                 <div className="mt-2 flex flex-col gap-3 rounded-2xl bg-marigold-300/25 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-[13px] leading-snug text-slate-700">
-                    The client sends a normal local bank transfer to these details. We spot it the moment it arrives.
+                    Fund the project to get {who} started. Your money stays in the vault until you approve the work.
                   </p>
                   <button
-                    onClick={handleDeposit}
-                    disabled={depositing}
-                    className="btn-warm flex shrink-0 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold disabled:opacity-70"
+                    onClick={() => setCheckoutOpen(true)}
+                    className="btn-warm flex shrink-0 items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold"
                   >
-                    {depositing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                    {depositing ? 'Receiving…' : 'Demo: client pays'}
+                    Pay {sym(contract.currency)}
+                    {contract.totalAmount.toLocaleString()}
                   </button>
                 </div>
               )}
@@ -250,6 +265,7 @@ export default function ContractCard({
             <div className="text-sm text-slate-500">Setting up the account…</div>
           )}
         </section>
+        )}
 
         {/* FX shield */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-forest-700 to-forest-800 p-5 text-white lg:col-span-5">
@@ -334,7 +350,7 @@ export default function ContractCard({
                       <span className="font-medium text-slate-500">
                         {pending && 'Starts once the deposit arrives'}
                         {funded && 'Funded — ready for the work'}
-                        {submitted && `${who} delivered this — waiting for approval`}
+                        {submitted && (isClient ? `${who} delivered this — take a look, then release the money` : 'Delivered — waiting for approval')}
                         {paid && 'Paid and settled'}
                       </span>
                       {m.submissionUrl && (
@@ -364,7 +380,11 @@ export default function ContractCard({
                     </div>
                   </div>
 
-                  {funded && (
+                  {funded && isClient && (
+                    <span className="rounded-full bg-sand px-3.5 py-2 text-xs font-medium text-slate-500">Waiting for {who} to deliver</span>
+                  )}
+
+                  {funded && !isClient && (
                     <button
                       onClick={() => setSubmissionModalMilestone(m)}
                       className="btn-ghost flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold text-forest-700"
@@ -374,7 +394,13 @@ export default function ContractCard({
                     </button>
                   )}
 
-                  {submitted && (
+                  {submitted && !isClient && (
+                    <span className="rounded-full bg-marigold-300/40 px-3.5 py-2 text-xs font-medium text-marigold-600">
+                      Waiting for {clientFirst} to review
+                    </span>
+                  )}
+
+                  {submitted && isClient && (
                     <button
                       onClick={() => handlePayout(m.id)}
                       disabled={paying}
@@ -406,8 +432,17 @@ export default function ContractCard({
         </div>
       </div>
 
+      {checkoutOpen && (
+        <CheckoutModal
+          contract={contract}
+          onClose={() => setCheckoutOpen(false)}
+          onPay={() => onSimulateDeposit(contract.id)}
+        />
+      )}
+
       {/* ---------- Submit modal ---------- */}
       {submissionModalMilestone && (
+        <Portal>
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
           onClick={() => setSubmissionModalMilestone(null)}
@@ -455,6 +490,7 @@ export default function ContractCard({
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </article>
   );

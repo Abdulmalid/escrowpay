@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Plus, Trash2, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { Currency, PayoutCurrency } from '@/lib/types';
 
 interface NewContractModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (contractId?: string) => void;
+  defaultClientName?: string;
+  defaultClientEmail?: string;
 }
 
-export default function NewContractModal({ isOpen, onClose, onCreated }: NewContractModalProps) {
+export default function NewContractModal({ isOpen, onClose, onCreated, defaultClientName = '', defaultClientEmail = '' }: NewContractModalProps) {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -39,6 +41,19 @@ export default function NewContractModal({ isOpen, onClose, onCreated }: NewCont
     { title: 'Milestone 1: Prototype & DB Schema', amount: 600, description: 'Core API setup and schema specs' },
     { title: 'Milestone 2: Final Frontend & Production Deployment', amount: 900, description: 'Complete QA and delivery' },
   ]);
+
+  // Prefill from the signed-in client whenever the form opens.
+  useEffect(() => {
+    if (isOpen) {
+      setClientName(defaultClientName);
+      setClientEmail(defaultClientEmail);
+    }
+  }, [isOpen, defaultClientName, defaultClientEmail]);
+
+  // The project total is always the sum of its milestones.
+  useEffect(() => {
+    setTotalAmount(milestones.reduce((sum, m) => sum + (Number(m.amount) || 0), 0));
+  }, [milestones]);
 
   if (!isOpen) return null;
 
@@ -90,7 +105,8 @@ export default function NewContractModal({ isOpen, onClose, onCreated }: NewCont
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to create escrow contract');
       }
-      onCreated();
+      const created = await res.json().catch(() => ({}));
+      onCreated(created?.contract?.id);
       onClose();
     } catch (err: any) {
       alert(err.message || 'Error creating contract');
@@ -182,6 +198,18 @@ export default function NewContractModal({ isOpen, onClose, onCreated }: NewCont
                 onChange={(e) => setFreelancerName(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
               />
+            </div>
+            <div>
+              <label className="block font-medium text-slate-300 mb-1">Freelancer Email *</label>
+              <input
+                type="email"
+                required
+                placeholder="tunde@email.com"
+                value={freelancerEmail}
+                onChange={(e) => setFreelancerEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">They’ll see this project when they sign in with this email.</p>
             </div>
             <div>
               <label className="block font-medium text-slate-300 mb-1">Freelancer Country</label>

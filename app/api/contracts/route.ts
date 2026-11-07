@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
     if (!title) errors.push('title is required');
     if (!clientName) errors.push('clientName is required');
     if (!freelancerName) errors.push('freelancerName is required');
+    const EMAIL = /^\S+@\S+\.\S+$/;
+    if (!EMAIL.test(clientEmail)) errors.push('a valid clientEmail is required');
+    if (!EMAIL.test(freelancerEmail)) errors.push('a valid freelancerEmail is required');
     if (!CURRENCIES.includes(currency)) errors.push(`currency must be one of ${CURRENCIES.join(', ')}`);
     if (!PAYOUT_CURRENCIES.includes(targetPayoutCurrency)) errors.push('unsupported targetPayoutCurrency');
     else if (CURRENCIES.includes(currency) && currency !== targetPayoutCurrency && !FX_RATES[currency]?.[targetPayoutCurrency]) {
@@ -107,9 +110,9 @@ export async function POST(req: NextRequest) {
       title,
       description: str(body.description, 2000),
       clientName,
-      clientEmail,
+      clientEmail: clientEmail.toLowerCase(),
       freelancerName,
-      freelancerEmail,
+      freelancerEmail: freelancerEmail.toLowerCase(),
       freelancerCountry: str(body.freelancerCountry) || 'Nigeria',
       totalAmount,
       currency,

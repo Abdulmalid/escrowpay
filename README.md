@@ -99,27 +99,32 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
 
-## 🏆 Judge Demo Guide (How to Win in 3 Minutes)
+## 🧪 Try it (test mode — no real money, no password)
 
-When recording your demo video or pitching to the hackathon judges:
+**Live:** https://escrowpay-global.vercel.app
 
-1. **Step 1: The Active Dashboard (0:00 - 0:45)**
-   * Show the active TVE metrics, the **Dual-Rail Engine status pill**, and the pre-loaded contracts.
-   * Point out the **FX Devaluation Shield** box: show how **₦225,000** was saved for a Nigerian engineer by holding the contract in USDC during currency depreciation.
+> **MOCK FLOW:** Blaaiz sandbox access is pending, so virtual accounts, FX swaps and payouts are simulated.
+> The code calls the real Blaaiz endpoints (`/oauth/token`, `/virtual-account`, `/payout`) and switches to them
+> when `BLAAIZ_SIMULATION_MODE=false` and sandbox keys are set.
 
-2. **Step 2: Dedicated Virtual Account & Deposit Simulation (0:45 - 1:30)**
-   * Select a contract in `Awaiting Deposit` (or create a new one via the **"New Escrow"** modal).
-   * Show the dedicated Blaaiz virtual account details (ClearBank sort code or Community Federal ACH routing).
-   * Click **"Launch Judge Live Simulator"** on the top right.
-   * Click **"Deposit via Virtual Account"** -> Observe the cryptographic `x-blaaiz-signature` verification and watch confetti trigger as status changes to **"Escrowed & Hedged in USDC"**!
+It behaves like a normal two-sided product. Use two browser tabs (or switch accounts from the avatar menu):
 
-3. **Step 3: Milestone Approval & Instant Multi-Rail Payout (1:30 - 2:30)**
-   * Click **"Approve & Release Payout"** on Milestone 2.
-   * Watch the real-time call to Blaaiz `/api/external/payout`.
-   * Open the **"Blaaiz Logs"** drawer to show the live audit trail of API calls, OAuth token validations, swap executions, and payout dispatches.
+1. **Sign in as a client** — e.g. the *Apex Global Ventures* test user, or join with any name + email.
+2. **Start a new project** — add a freelancer name **and email**, a payout bank / M-Pesa number, and milestones.
+3. **Pay at checkout** — the client sends a (test) bank transfer to the dedicated virtual account. The money is held in the vault and swapped to USDC to protect against currency swings.
+4. **Sign in as the freelancer** with the *same email the client typed* (or the *Chidi* / *Amina* test users). The project is there, funded.
+5. **Hand in the work** (a link), then switch back to the client.
+6. **Approve & pay** — the freelancer is paid out; open their **wallet** to see the payment and payout destination.
 
-4. **Step 4: Architecture Blueprint (2:30 - 3:00)**
-   * Click the **"Architecture"** button to display the complete 4-step sequence diagram showcasing deep integration with the Blaaiz platform.
+Behind the scenes (see **Avatar menu → Blaaiz API activity**): OAuth token, virtual-account provisioning, a signed `collection.successful` webhook (HMAC-SHA256), the USDC swap, and the payout call.
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+node scripts/test-e2e.mjs   # API regression suite (needs `npm run build` first)
+```
+
+Set `DATABASE_URL` (Supabase Postgres, transaction pooler) for persistence; without it the app uses local JSON files.
 
 ---
 
